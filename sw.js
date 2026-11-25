@@ -1,8 +1,8 @@
 // Najpierw sieć (żeby zmiany w plan.js od razu działały), offline — z pamięci.
 // Po większych zmianach podbij numer wersji.
-const CACHE = 'forma-v8';
+const CACHE = 'forma-v9';
 const ASSETS = ['./', './index.html', './styles.css', './plan.js', './app.js', './manifest.webmanifest',
-  './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
+  './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
