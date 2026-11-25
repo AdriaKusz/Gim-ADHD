@@ -1,6 +1,6 @@
 // Najpierw sieć (żeby zmiany w plan.js od razu działały), offline — z pamięci.
 // Po większych zmianach podbij numer wersji.
-const CACHE = 'forma-v9';
+const CACHE = 'forma-v10';
 const ASSETS = ['./', './index.html', './styles.css', './plan.js', './app.js', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 

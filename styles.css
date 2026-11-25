@@ -519,3 +519,7 @@ h1 .wave { display: inline-block; font-size: .9em; }
 .daypick button.on { background: var(--s1); color: var(--g); box-shadow: var(--shadow); }
 .stats3 .icrow { display: flex; gap: 4px; height: 22px; }
 .stats3 .icrow .ic { display: inline-block; margin: 0; }
+.wtag { display: inline-block; margin-top: 4px; font-size: 12px; font-weight: 600; padding: 4px 9px; border-radius: 8px; background: var(--g-soft); color: var(--g); min-height: 28px; }
+.wtag.on { background: var(--s1); color: var(--mu); border: 1px solid var(--line); }
+.cbx { display: flex; gap: 10px; align-items: flex-start; margin: 12px 0 0; font-size: 14px; color: var(--mu); }
+.cbx input { width: 22px; height: 22px; accent-color: var(--g); flex-shrink: 0; margin: 0; }

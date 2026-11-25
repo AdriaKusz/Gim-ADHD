@@ -151,8 +151,8 @@ function energy(d) {
   const st = S.settings, h = num(st.height), a = num(st.age), w = weightOn(d);
   const meals = S.food[d] || [], eaten = meals.reduce((x, m) => x + (+m.kcal || 0), 0);
   const act = S.activity[d] || {}, steps = num(act.steps);
-  const actKcal = actsOn(d).reduce((x, a) => x + (num(a.kcal) || 0), 0);
-  const watch = num(act.kcal), active = watch != null ? watch : (actKcal > 0 ? actKcal : null);
+  const actKcal = actsOn(d).filter(a => !a.inWatch).reduce((x, a) => x + (num(a.kcal) || 0), 0);
+  const watch = num(act.kcal), active = watch == null && !actKcal ? null : (watch || 0) + actKcal;
   if (!h || !a || !w) return { ok: false, eaten, active, steps, meals };
   const bmr = 10 * w + 6.25 * h - 5 * a - 161;             // Mifflin-St Jeor, kobieta
   const tdee = Math.round(Math.max(bmr * 1.2, bmr + (active || 0)));
@@ -586,7 +586,7 @@ function vWeek(t, ph) {
       <div class="t-p">${ic('foot')}<b>${footN}/7</b><span>stopa</span></div>
     </div>`;
   if (credited.length) h += `<p class="hint">${ic('check')}<span>Aktywność ${CARDIO_MIN}+ min zaliczyła ${credited.length === 1 ? 'trening' : 'treningi'}: ${credited.map(id => esc(SES[id].name)).join(', ')}.</span></p>`;
-  if (wa.length) h += `<ul class="acts">${wa.map(a => `<li>${badge(actType(a.type)[2], 'v')}<div class="grow"><b>${esc(actName(a))}</b><small>${esc(dayLabel(a.d))}${a.min ? ` · ${a.min} min` : ''}${a.kcal ? ` · ${a.kcal} kcal` : ''}</small></div><button class="icon-btn" data-a="delAct" data-v="${a.id}" aria-label="Usuń ${esc(actName(a))}">${ic('trash')}</button></li>`).join('')}</ul>`;
+  if (wa.length) h += `<ul class="acts">${wa.map(a => `<li>${badge(actType(a.type)[2], 'v')}<div class="grow"><b>${esc(actName(a))}</b><small>${esc(dayLabel(a.d))}${a.min ? ` · ${a.min} min` : ''}${a.kcal ? ` · ${a.kcal} kcal` : ''}</small>${a.kcal ? `<button class="wtag ${a.inWatch ? 'on' : ''}" data-a="actWatch" data-v="${a.id}" aria-pressed="${!!a.inWatch}">${a.inWatch ? 'jest w Ruchu — nie dodaję' : 'dodaję do Ruchu'}</button>` : ''}</div><button class="icon-btn" data-a="delAct" data-v="${a.id}" aria-label="Usuń ${esc(actName(a))}">${ic('trash')}</button></li>`).join('')}</ul>`;
   h += ui.addAct ? actForm() : `<button class="btn ghost full" data-a="addAct">${ic('plus')} Dodaj aktywność</button>`;
   return h + '</section>';
 }
@@ -601,8 +601,9 @@ function actForm() {
       <label><span>${ic('clock')} Czas (min)</span><input id="actMin" type="text" inputmode="numeric" placeholder="np. 60" value="${f.min ?? ''}"></label>
       <label><span>${ic('flame')} Kcal</span><input id="actKcal" type="text" inputmode="numeric" placeholder="np. 400" value="${f.kcal ?? ''}"></label>
     </div>
+    <label class="cbx"><input id="actInWatch" type="checkbox" ${f.inWatch ? 'checked' : ''}><span>Zegarek już ją zarejestrował (te kcal są w „Aktywne kcal” w Ruchu)</span></label>
     <div class="daypick"><button class="${f.day === 0 ? 'on' : ''}" data-a="actDay" data-v="0">Dziś</button><button class="${f.day === 1 ? 'on' : ''}" data-a="actDay" data-v="1">Wczoraj</button></div>
-    <p class="muted small">${CARDIO_MIN}+ minut zalicza jeden trening „Kondycja” w tym tygodniu.</p>
+    <p class="muted small">Kcal z aktywności dodają się do Ruchu. ${CARDIO_MIN}+ minut zalicza jeden trening „Kondycja” w tym tygodniu.</p>
     <div class="row2"><button class="btn ghost" data-a="cancelAct">Anuluj</button><button class="btn" data-a="saveAct2">${ic('check')} Zapisz</button></div>
   </div>`;
 }
@@ -729,7 +730,7 @@ function vFood() {
           <li>${ic('target')}<b>${e.budget}</b><span>budżet</span></li>
           <li>${ic('flame')}<b>${e.tdee}</b><span>spalasz</span></li>
         </ul></div>
-      <p class="hint">${ic('info')}<span>Deficyt: <b>${e.deficit >= 0 ? e.deficit : '−' + (-e.deficit)} kcal</b> (cel ${S.settings.deficit}). ${e.active == null ? 'Budżet urośnie, gdy wieczorem dopiszesz aktywne kalorie.' : e.watch != null ? 'Wliczone aktywne kalorie z zegarka: ' + e.watch + (e.actKcal ? ' (zawierają już aktywności, więc nie dodaję ich drugi raz)' : '') + '.' : 'Wliczone kcal z aktywności: ' + e.actKcal + '. Gdy wpiszesz aktywne kcal z zegarka, zastąpią tę liczbę.'}${e.floor ? ' Budżet nie schodzi poniżej 1200 kcal.' : ''}</span></p>
+      <p class="hint">${ic('info')}<span>Deficyt: <b>${e.deficit >= 0 ? e.deficit : '−' + (-e.deficit)} kcal</b> (cel ${S.settings.deficit}). ${e.active == null ? 'Budżet urośnie, gdy dopiszesz ruch albo aktywność.' : `Spalone w ruchu: <b>${e.active} kcal</b> = ${e.watch != null ? `${e.watch} z Ruchu` : ''}${e.watch != null && e.actKcal ? ' + ' : ''}${e.actKcal ? `${e.actKcal} z aktywności` : ''}.`}${e.floor ? ' Budżet nie schodzi poniżej 1200 kcal.' : ''}</span></p>
     </section>`;
   }
 
@@ -740,7 +741,7 @@ function vFood() {
       <label><span>${ic('run')} Kroki</span><input id="aSteps" type="text" inputmode="numeric" value="${act.steps ?? ''}" placeholder="np. 8000"></label>
     </div>
     <button class="btn ghost full" data-a="saveAct">${ic('check')} Zapisz ruch</button>
-    <p class="hint">${ic('info')}<span>Aktywne kcal: aplikacja Fitness (czerwony pierścień „Ruch”) albo Zdrowie → Aktywność → Aktywna energia. Wpisuj wieczorem, za cały dzień.</span></p>
+    <p class="hint">${ic('info')}<span>Aktywne kcal: Fitness (czerwony pierścień „Ruch”) albo Zdrowie → Aktywność → Aktywna energia, wieczorem za cały dzień. Kcal z aktywności (siatkówka, rolki…) dodają się do tej liczby.</span></p>
   </section>`;
 
   const rec = recentMeals();
@@ -1039,6 +1040,7 @@ function setVal(k, val) {
 
 function keepActF() {
   const f = ui.actF || (ui.actF = { type: 'skate', day: 0 }), g = id => document.getElementById(id);
+  if (g('actInWatch')) f.inWatch = g('actInWatch').checked;
   if (g('actMin')) f.min = g('actMin').value; if (g('actKcal')) f.kcal = g('actKcal').value; if (g('actName')) f.name = g('actName').value;
 }
 function pushMeal(n, kcal) {
@@ -1117,9 +1119,11 @@ const act = {
     if (kcal != null && (kcal < 0 || kcal > 4000)) { toast('Kcal: od 0 do 4000'); return; }
     const a = { id: Date.now(), d: addDays(today(), -f.day), type: f.type, min: Math.round(min), kcal: kcal == null ? null : Math.round(kcal) };
     if (f.type === 'other') a.name = f.name.trim();
+    if (f.inWatch) a.inWatch = true;
     S.acts.push(a); ui.addAct = false; save(); render();
     toast(min >= CARDIO_MIN ? `Zapisane! ${actName(a)} zalicza kondycję.` : `Zapisane: ${actName(a)}`);
   },
+  actWatch(v) { const a = S.acts.find(x => String(x.id) === String(v)); if (!a) return; a.inWatch = !a.inWatch; save(); render(); toast(a.inWatch ? 'Nie dodaję — jest już w Ruchu' : 'Dodaję do Ruchu'); },
   delAct(v) { if (!confirm('Usunąć tę aktywność?')) return; S.acts = S.acts.filter(a => String(a.id) !== String(v)); save(); render(); },
   addW() { ui.addW = true; render(); setTimeout(() => document.getElementById('wIn')?.focus(), 50); },
   tabAddW() { S.tab = 'today'; ui.addW = true; render(); scrollTo(0, 0); setTimeout(() => document.getElementById('wIn')?.focus(), 50); },
