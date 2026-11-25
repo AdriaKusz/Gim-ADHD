@@ -2,6 +2,7 @@
 'use strict';
 
 const KEY = 'forma.v1';
+const APP_VERSION = '11 · sumowanie ruchu';
 const P = window.PLAN, EX = window.EX, SES = window.SESSIONS;
 const app = document.getElementById('app');
 const NO_LOG = ['FOOT', 'SKI']; // te zestawy tylko odhaczają „stopę na dziś”
@@ -1015,6 +1016,7 @@ function vSettings() {
     <p class="muted small">${realLogs().length} treningów · ${S.weights.length} ważeń · ${S.body.length} pomiarów obwodów · ${Object.keys(S.food).length} dni z jedzeniem · ${Object.keys(S.foot).length} dni ze stopą</p>
     <p class="muted small">Daty nart i szkolenia oraz cały plan zmieniasz w pliku <code>plan.js</code>.</p>
     <button class="btn ghost full danger" data-a="reset">${ic('trash')} Usuń wszystkie dane</button>
+    <p class="muted small center">Wersja aplikacji: ${APP_VERSION}</p>
   </section>${LANDSCAPE}</div>`;
 }
 

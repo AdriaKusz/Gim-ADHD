@@ -1,11 +1,12 @@
-// Najpierw sieć (żeby zmiany w plan.js od razu działały), offline — z pamięci.
-// Po większych zmianach podbij numer wersji.
-const CACHE = 'forma-v10';
+// Najpierw sieć z pominięciem pamięci przeglądarki (nowe wersje widać od razu),
+// offline — kopia zapisana przez aplikację. Po zmianach podbij numer wersji.
+const CACHE = 'forma-v11';
 const ASSETS = ['./', './index.html', './styles.css', './plan.js', './app.js', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
+  e.waitUntil(caches.open(CACHE).then(c => Promise.all(ASSETS.map(u =>
+    fetch(u, { cache: 'reload' }).then(r => r.ok ? c.put(u, r) : null).catch(() => null)))));
   self.skipWaiting();
 });
 self.addEventListener('activate', e => {
@@ -16,9 +17,8 @@ self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
   e.respondWith(
-    fetch(req).then(res => {
-      const copy = res.clone();
-      caches.open(CACHE).then(c => c.put(req, copy));
+    fetch(req, { cache: 'no-cache' }).then(res => {
+      if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); }
       return res;
     }).catch(() => caches.match(req).then(r => r || caches.match('./index.html')))
   );
